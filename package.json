@@ -1,0 +1,8 @@
+{
+  "name": "vim.world",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/maaslalani/vim-world",
+  "author": "Maas Lalani <maaslalani1@gmail.com>",
+  "license": "MIT"
+}
