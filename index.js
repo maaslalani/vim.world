@@ -6,22 +6,20 @@ const app = express();
 const server = http.createServer(app);
 const io = socket(server);
 
+const port = process.env.PORT || 3000;
+
+app.use('/public', express.static('public'));
+
 app.get('/', (request, response) => {
-  response.sendFile(__dirname + '/index.html');
+  response.sendFile(__dirname + '/public/index.html');
 });
 
 let state = {};
 
 io.on('connection', (socket) => {
-  console.log('connected');
-
   socket.on('room', (room) => {
     socket.join(room);
-    io.in(room).emit('change', state[room] || '');
-  });
-
-  socket.on('disconnect', () => {
-    console.log('disconnected');
+    io.in(room).emit('change', state[room]);
   });
 
   socket.on('change', ({room, text}) => {
@@ -30,6 +28,4 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(3000, () => {
-  console.log('listening on *:3000');
-});
+server.listen(port);
