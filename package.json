@@ -8,5 +8,12 @@
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^2.3.0"
+  },
+  "scripts": {
+    "start": "node -r esm index.js",
+    "dev": "nodemon -r esm index.js"
+  },
+  "devDependencies": {
+    "esm": "^3.2.25"
   }
 }

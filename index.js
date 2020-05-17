@@ -1,18 +1,35 @@
-const app = require('express')();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+import express from 'express';
+import http from 'http';
+import socket from 'socket.io';
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+const app = express();
+const server = http.createServer(app);
+const io = socket(server);
+
+app.get('/', (request, response) => {
+  response.sendFile(__dirname + '/index.html');
 });
 
+let state = {};
+
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log('connected');
+
+  socket.on('room', (room) => {
+    socket.join(room);
+    io.in(room).emit('change', state[room] || '');
+  });
+
   socket.on('disconnect', () => {
-    console.log('user disconnected');
+    console.log('disconnected');
+  });
+
+  socket.on('change', ({room, text}) => {
+    state[room] = text;
+    io.in(room).emit('change', text);
   });
 });
 
-http.listen(3000, () => {
+server.listen(3000, () => {
   console.log('listening on *:3000');
 });
