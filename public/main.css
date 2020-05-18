@@ -1,18 +1,75 @@
-body {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
+:root {
+  --background-color: #1D1F21;
+  --foreground-color: #C5C8C6;
+  --secondary-background-color: #161719;
+  --secondary-foreground-color: #707880;
+
+  --header-height: 50px;
+  --footer-height: 30px;
 }
 
-textarea {
-  height: 100%;
-  width: 100%;
+body {
+  font-family: 'Roboto Mono', monospace;
 
-  padding: 5px;
-  border: 0;
-  box-sizing: border-box;
+  height: 100vh;
+
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background-color: var(--secondary-background-color);
+  color: var(--secondary-foreground-color);
 
   font-family: 'Roboto Mono', monospace;
   font-size: 1em;
   line-height: 1.5em;
+
+  height: var(--header-height);
+  padding: 0 1em;
+}
+
+textarea {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1em;
+  line-height: 1.5em;
+
+  background-color: var(--background-color);
+  color: var(--foreground-color);
+
+  outline: none;
+  border: 0;
+  box-sizing: border-box;
+
+  padding: 1em;
+  height: calc(100% - var(--header-height) - var(--footer-height));
+  width: 100%;
+  resize: none;
+}
+
+footer {
+  display: flex;
+  align-items: center;
+
+  position: fixed;
+  bottom: 0px;
+
+  background-color: var(--secondary-background-color);
+
+  height: var(--footer-height);
+  width: 100%;
+}
+
+footer div {
+  display: flex;
+  align-items: center;
+
+  background-color: #81A2BE;
+
+  height: 100%;
+  padding: 0 2em;
 }

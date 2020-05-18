@@ -56,7 +56,7 @@ var is_empty_object = function(e) {
   return true;
 }
 
-var COMMAND = 'COMMAND'
+var NORMAL = 'NORMAL'
 var INSERT = 'INSERT'
 var VISUAL = 'VISUAL'
 
@@ -156,7 +156,7 @@ function VIM(ctrees) {
 
   this.set_mode = function(mode) {
     this.log("set_mode " + mode)
-    if (this.m_mode === COMMAND && mode === VISUAL) {
+    if (this.m_mode === NORMAL && mode === VISUAL) {
       // do not change when comming from PENDING - would affect 'viw'
       this.m_selection_from = this.get_pos()
     }
@@ -209,7 +209,7 @@ function VIM(ctrees) {
   }
 
   this.reset_mode = function() {
-    this.set_mode( COMMAND )
+    this.set_mode( NORMAL )
   }
 
   this.reset_commands = function() {
@@ -361,7 +361,7 @@ var node = function(x) {
 var build_sequence_trees = function() {
   var tree_command = build_tree_command_mode()
   var tree_visual = build_tree_visual_mode()
-  return {COMMAND: tree_command,
+  return {NORMAL: tree_command,
     VISUAL: tree_visual}
 }
 
@@ -444,8 +444,8 @@ var build_tree_command_mode = function() {
     .set_choice('c', _c,  {action: act_delete_range, mode: INSERT})
     .set_choice('C', node({action: act_delete_range, mode: INSERT,
       move_func: move_to_line_end}))
-    .set_choice('d', _d,  {action: act_delete_range, mode: COMMAND})
-    .set_choice('D', node({action: act_delete_range, mode: COMMAND, 
+    .set_choice('d', _d,  {action: act_delete_range, mode: NORMAL})
+    .set_choice('D', node({action: act_delete_range, mode: NORMAL, 
       move_func: move_to_line_end}))
     .set_choice('i', node({action: act_insert}))
     .set_choice('I', node({action: act_insert_to_start}))
@@ -486,7 +486,7 @@ var build_tree_visual_mode = function() {
   var _r = node()
     .set_choices( make_choices_for_navigation({action: act_move}) )
     .set_choices( make_choices_for_digits() )
-    .set_choice('d', node({action: act_delete_current_selection, mode: COMMAND}) )
+    .set_choice('d', node({action: act_delete_current_selection, mode: NORMAL}) )
     .set_choice('c', node({action: act_delete_current_selection, mode: INSERT}) )
   return _r
 }
@@ -1167,47 +1167,3 @@ var move_to_line_end = function(text, pos) {
   var s = select_line( text, pos ) 
   return s[0] + s[1]
 }
-
-/* === READY === */
-
-/* crossrider hook */
-
-//ext// /* hook vim on click into textarea */
-//ext// $(document).on('focus', 'textarea', function(event){
-//ext//    console.log( 'vim: FOCUS' )
-//ext//    $(this).off('keyup keydown keypress')
-//ext//    //$(this).on('keyup keydown keypress', function(e){ 
-//ext//    //  e.stopPropagation() 
-//ext//    //  e.preventDefault()
-//ext//    //  return false
-//ext//    //})
-//ext//
-//ext//    if ( undefined === this.__vim_is_attached ) {
-//ext//      var v = new VIM()
-//ext//      v.on_log = function(m){console.log(m)}
-//ext//      v.attach_to( this )
-//ext//      this.__vim_is_attached = true
-//ext//    } else {
-//ext//      console.log('vim: already attached')
-//ext//    }
-//ext// })
-//ext//
-//ext// $(document).on('blur', 'textarea', function(event){
-//ext//    //$(this).off('vim: keyup keydown keypress')
-//ext//    if (true === window.__refocus) {
-//ext//      console.log('blur: refocus')
-//ext//      $(this).focus()
-//ext//    } else {
-//ext//      console.log('blur: don\'t refocus')
-//ext//    }
-//ext//
-//ext//    return false
-//ext// })
-//ext//
-//ext// $(document).on('click',function(event){
-//ext//   console.log('vim: loose focus on click')
-//ext//   window.__refocus = false
-//ext//   $(this).focus()
-//ext// })
-//ext//
-//ext//});
