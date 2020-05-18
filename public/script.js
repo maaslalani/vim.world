@@ -1,7 +1,6 @@
 const socket = io();
 const room = new URLSearchParams(location.search).get('room');
-document.querySelector('textarea').addEventListener('keydown', (event) => {
-  event.preventDefault();
+document.querySelector('textarea').addEventListener('keyup', (event) => {
   socket.emit('change', { room, text: event.target.value });
 });
 socket.on('connect', () => {
