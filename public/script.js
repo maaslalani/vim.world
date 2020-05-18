@@ -1,3 +1,4 @@
+const room = new URLSearchParams(location.search).get('room');
 let pri = Math.floor(Math.random() * 0x1000000);
 let ser = 0;
 
@@ -47,8 +48,12 @@ textElement.addEventListener('input', function(event) {
   for (let i = 0; i < ops.length; i++) {
     state.add(ops[i]);
   }
-  socket.emit('update', ops);
+  socket.emit('update', {room, ops});
   oldText = textElement.value;
+});
+
+socket.on('connect', function() {
+  socket.emit('room', room);
 });
 
 socket.on('update', function(ops) {
@@ -61,7 +66,7 @@ socket.on('update', function(ops) {
   }
 
   if (rev < state.ops.length) {
-    socket.emit('update', state.ops.slice(rev));
+    socket.emit('update', {room, ops: state.ops.slice(rev)});
   }
 
   textElement.value = state.get_str();

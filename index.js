@@ -19,27 +19,37 @@ app.get('/lobby', (request, response) => {
   response.sendFile(__dirname + '/public/lobby.html');
 });
 
-let state = new ot.DocState(); 
-let revision = 0;
+let state = {}
 
-function broadcast() {
-  if (revision < state.ops.length) {
-    io.emit('update', state.ops.slice(revision));
-    revision = state.ops.length;
+function broadcast(room) {
+  if (state[room].revision < state[room].docState.ops.length) {
+    io.in(room).emit('update', state[room].docState.ops.slice(state[room].revision));
+    state[room].revision = state[room].docState.ops.length;
   }
 }
 
 io.on('connection', (socket) => {
   let peer = new ot.Peer();
 
-  socket.on('update', (ops) => {
-    for (let i = 0; i < ops.length; i++) {
-      peer.merge_op(state, ops[i]);
-    }
-    broadcast();
-  });
+  socket.on('room', (room) => {
+    socket.join(room);
 
-  socket.emit('update', state.ops);
+    if (!state[room]) {
+      state[room] = {
+        docState: new ot.DocState(),
+        revision: 0,
+      }
+    }
+
+    socket.emit('update', state[room].docState.ops);
+  })
+
+  socket.on('update', ({ops, room}) => {
+    for (let i = 0; i < ops.length; i++) {
+      peer.merge_op(state[room].docState, ops[i]);
+    }
+    broadcast(room);
+  });
 });
 
 server.listen(port);
