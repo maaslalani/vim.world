@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>vim.world</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.js"></script>
+    <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+        background-color: #222;
+        font-family: 'Roboto Mono', monospace;
+      }
+      header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 15vh;
+      }
+      h1 {
+        color: white;
+        font-weight: 500;
+        line-height: 1.5em;
+        margin: 0;
+        padding: 0;
+      }
+      h2 {
+        display: flex;
+        align-items: center;
+        color: #aaa;
+        font-weight: 400;
+        font-size: 1em;
+        line-height: 1.5em;
+        margin: 0;
+        padding: 0;
+      }
+      model-viewer {
+        height: 85vh;
+        width: 100vw;
+        --progress-bar-height: 0px;
+        --progress-bar-color: transparent;
+        --poster-color: transparent;
+      }
+      a {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        border: 4px solid #555;
+        background-color: white;
+        box-sizing: border-box;
+        --min-hotspot-opacity: 0.075;
+      }
+      :not(:defined) > * {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>vim.world</h1>
+      <h2>use vim with anyone in the world</h2>
+      <h2>click a&nbsp;<a href="/?room=vim"></a>&nbsp;to enter a room</h2>
+    </header>
+    <model-viewer
+      src="/public/earth.glb"
+      alt="A cartoon-ish 3D model of the world"
+      background-color="#333"
+      interaction-prompt="none"
+      auto-rotate
+      auto-rotate-delay="2000"
+      camera-controls
+      />
+      <a href="/?room=1" slot="hotspot-0" class="hotspot" data-position="-4.262m 5.820m 4.719m" data-normal="-0.535m 0.6620m 0.524m"></a>
+      <a href="/?room=2" slot="hotspot-1" class="hotspot selected" data-position="5.307m 5.472m 4.174m" data-normal="0.660m 0.674m 0.330m"></a>
+      <a href="/?room=3"  slot="hotspot-2" class="hotspot" data-position="8.738m 0.490m 0.352m" data-normal="0.993m -0.104m -0.0356m"></a>
+      <a href="/?room=4" slot="hotspot-3" class="hotspot" data-position="-4.139m 5.160m -5.811m" data-normal="-0.495m 0.705m -0.507m"></a>
+      <a href="/?room=5" slot="hotspot-4" class="hotspot" data-position="-6.956m -0.0851m -5.211m" data-normal="-0.886m -0.0729m -0.457m"></a>
+      <a href="/?room=6" slot="hotspot-5" class="hotspot" data-position="2.686m 1.951m -8.039m" data-normal="0.146m 0.239m -0.959m"></a>
+      <a href="/?room=7" slot="hotspot-6" class="hotspot" data-position="-3.392m -5.083m 6.573m" data-normal="-0.311m -0.681m 0.661m"></a>
+    </model-viewer>
+  </body>
+</html>

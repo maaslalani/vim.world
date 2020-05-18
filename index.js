@@ -14,6 +14,10 @@ app.get('/', (request, response) => {
   response.sendFile(__dirname + '/public/index.html');
 });
 
+app.get('/lobby', (request, response) => {
+  response.sendFile(__dirname + '/public/lobby.html');
+});
+
 let state = {};
 
 io.on('connection', (socket) => {

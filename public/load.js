@@ -4,6 +4,11 @@ const COLORS = {
   VISUAL: '#B5BD68',
 }
 
+const search = new URLSearchParams(location.search);
+if (!search.get('room')) {
+  location.href = '/lobby';
+}
+
 window.onload = function() {
   const vim = new VIM();
   const textarea = document.querySelector('textarea');
