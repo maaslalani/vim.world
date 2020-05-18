@@ -1,3 +1,9 @@
+const textarea = document.querySelector('textarea');
+
+function dispatchInputEvent() {
+  textarea.dispatchEvent(new Event('input'));
+}
+
 /* Command tree */
 
 function Node(data) {
@@ -872,6 +878,7 @@ var act_insert_line_after = function(vim, cdata) {
   vim.set_text( q.text )
   vim.set_pos( q.pos )
   vim.set_mode( INSERT )
+  dispatchInputEvent();
 }
 
 var act_insert_line_before = function(vim, cdata) {
@@ -884,6 +891,7 @@ var act_insert_line_before = function(vim, cdata) {
   vim.set_text( text )
   vim.set_pos( xs[0] + k )
   vim.set_mode( INSERT )
+  dispatchInputEvent();
 }
 
 var act_move = function(vim, cdata) {
@@ -912,6 +920,7 @@ var act_delete_range = function(vim, cdata) {
   vim.set_text( t.text )
   vim.set_pos( t.from )
   vim.set_mode( cdata.mode ) 
+  dispatchInputEvent();
 }
 
 var act_yank_range = function(vim, cdata) {
@@ -952,6 +961,7 @@ var act_delete_char = function(vim, cdata) {
   if (cdata.mode !== undefined) {
     vim.set_mode(INSERT)
   }
+  dispatchInputEvent();
 }
 
 var act_append = function(vim, cdata) {
@@ -988,6 +998,7 @@ var act_delete_current_selection = function(vim, cdata) {
   vim.set_pos( t.from )
   vim.set_mode(cdata.mode)
   vim.insert_to_clipboard( t.cut )
+  dispatchInputEvent();
 }
 
 var act_visual_mode = function(vim, cdata) {
@@ -1001,6 +1012,7 @@ var act_undo = function(vim, cdata) {
     var u = vim.m_undo_stack.pop()
     vim.set_text( u.text )
     vim.set_pos( u.pos )
+    dispatchInputEvent();
   }
 }
 
@@ -1008,12 +1020,14 @@ var act_paste_after = function(vim, cdata) {
   var pos = vim.get_pos()
   __paste(vim, cdata)
   vim.set_pos( pos + vim.get_clipboard().length )
+  dispatchInputEvent();
 }
 
 var act_paste_before = function(vim, cdata){
   var pos = vim.get_pos()
   __paste(vim, cdata)
   vim.set_pos( pos )
+  dispatchInputEvent();
 }
 
 var __paste = function(vim, cdata) {
@@ -1033,16 +1047,19 @@ var act_merge_lines = function(vim, cdata) {
   t = t.substr( 0, endl ) + t.substr( endl + 1 )
   vim.set_text( t )
   vim.set_pos( endl )
+  dispatchInputEvent();
 }
 
 var act_indent_increase = function(vim, cdata) {
   vim.log('act_indent_increase')
   __alter_selection(vim, cdata, function(t){return t.replace(/^/gm, ' ')} )
+  dispatchInputEvent();
 }
 
 var act_indent_decrease = function(vim, cdata) {
   vim.log('act_indent_decrease')
   __alter_selection(vim, cdata, function(t){return t.replace(/^ /gm, '')} )
+  dispatchInputEvent();
 }
 
 var __alter_selection = function(vim, cdata, func) {

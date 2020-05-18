@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import socket from 'socket.io';
+import ot from './public/ot';
 
 const app = express();
 const server = http.createServer(app);
@@ -18,18 +19,27 @@ app.get('/lobby', (request, response) => {
   response.sendFile(__dirname + '/public/lobby.html');
 });
 
-let state = {};
+let state = new ot.DocState(); 
+let revision = 0;
+
+function broadcast() {
+  if (revision < state.ops.length) {
+    io.emit('update', state.ops.slice(revision));
+    revision = state.ops.length;
+  }
+}
 
 io.on('connection', (socket) => {
-  socket.on('room', (room) => {
-    socket.join(room);
-    io.in(room).emit('change', state[room]);
+  let peer = new ot.Peer();
+
+  socket.on('update', (ops) => {
+    for (let i = 0; i < ops.length; i++) {
+      peer.merge_op(state, ops[i]);
+    }
+    broadcast();
   });
 
-  socket.on('change', ({room, text}) => {
-    state[room] = text;
-    io.in(room).emit('change', text);
-  });
+  socket.emit('update', state.ops);
 });
 
 server.listen(port);
