@@ -1,3 +1,5 @@
+/* Command tree */
+
 function Node(data) {
   this.set_choice = function( option, node, data ) {
     this.nodes[ option ] = {node: node, data: data}
@@ -155,6 +157,7 @@ function VIM(ctrees) {
   this.set_mode = function(mode) {
     this.log("set_mode " + mode)
     if (this.m_mode === COMMAND && mode === VISUAL) {
+      // do not change when comming from PENDING - would affect 'viw'
       this.m_selection_from = this.get_pos()
     }
     this.m_mode = mode
@@ -170,6 +173,9 @@ function VIM(ctrees) {
     this.m_buffer += text
   }
 
+  /* This is used to distinguish between "2daw" and "dawdaw". In first case,
+   * both lines should be put into the buffer, and in the second case - only
+   * the line deleted at second "daw", overwriting the line from first "daw" */
   this.allow_clipboard_reset = function(text) {
     this.m_allow_clipboard_reset = true
   }
@@ -276,6 +282,7 @@ function VIM(ctrees) {
     if ( fn === undefined )  {
       this.log('ERROR: could not execute leaf!')
     } else {
+      //fn.apply( this, [this, this.m_cdata] )
       fn( this, this.m_cdata )
     }
   }
@@ -286,22 +293,26 @@ function VIM(ctrees) {
     }
   }
 
-  this.m_ctrees = build_sequence_trees()
+  this.m_ctrees = build_sequence_trees() // this can be shared among all VIMs
   this.m_selector = null
   this.m_mode = undefined
   this.m_selection_from = undefined
   this.m_cnode = undefined
   this.m_current_sequence = ''
   this.m_digit_buffer = ''
-  this.m_cdata = {}
+  this.m_cdata = {} /* data merged during ctree traversal */
   this.m_undo_stack = []
   this.m_buffer = ''
 
+  // callbacks, for extenal functions; e.g., for nice formatting
   this.on_set_mode = undefined
   this.on_set_pos = undefined
   this.on_log = undefined
-}
+} /* VIM END */
 
+//==============================================================================
+
+// http://stackoverflow.com/questions/263743/how-to-get-caret-position-in-textarea
 function getCaret(el) { 
   if (el.selectionStart) { 
     return el.selectionStart; 
@@ -323,6 +334,10 @@ function getCaret(el) {
   return 0; 
 }
 
+/* 
+based on
+http://stackoverflow.com/questions/499126/jquery-set-cursor-position-in-text-area
+*/
 var _select_pos = function(el, pos) {
   if (el.setSelectionRange) {
     el.focus();
@@ -335,6 +350,9 @@ var _select_pos = function(el, pos) {
     range.select();
   }
 };
+
+
+//=============================================================================
 
 var node = function(x) {
   return new Node(x)
@@ -430,6 +448,7 @@ var build_tree_command_mode = function() {
     .set_choice('D', node({action: act_delete_range, mode: COMMAND, 
       move_func: move_to_line_end}))
     .set_choice('i', node({action: act_insert}))
+    .set_choice('I', node({action: act_insert_to_start}))
     .set_choice('J', node({action: act_merge_lines}))
     .set_choice('o', node({action: act_insert_line_after}))
     .set_choice('O', node({action: act_insert_line_before}))
@@ -515,11 +534,19 @@ var make_choices_for_digits = function(){
   return xs
 }
 
+//=============================================================================
+
+/* find_... , till_... and other selection functions return [pos,len] where pos
+ * is position of the element and len is length of element. len can be 0 */
+
 var find_word = function( text, pos ) {
   var m = '(\\s(?=\\S))|([^W](?=[W]))|(\\S(?=\\s))|([W](?=[^W]))'.replace(/W/g,'\\u0000-\\u002f\\u003a-\\u0040\\u005b-\\u0060\\u007b-\\u00bf')
   var p = new RegExp( m,'g' )
   return __find_regex_break( p, text, pos )
 }
+
+// non ascii unicode
+///[\u0000-\u002f\u003a-\u0040\u005b-\u0060\u007b-\u00bf]/
 
 var find_word_plus = function(text, pos) {
   var p = /(\s(?=\S))|(\S(?=\s))/g
@@ -546,6 +573,13 @@ var d_with_characters_after = function(fn, characters){
   }
 }
 
+
+//var find_word_with_spaces_before = function(text, pos) {
+//  var xs = find_word(text, pos)
+//  var n = count_space_to(text, xs[0])
+//  return [ xs[0]-n, xs[1]+n ]
+//}
+
 var find_word_plus_with_trailing_spaces = function(text, pos) {
   var g = find_word_plus(text, pos)
   var n = count_space_from(text, g[0]+g[1])
@@ -563,6 +597,12 @@ var till_right_word_bound_plus = function( text, pos ) {
   return [ pos, xs[0] + xs[1] - pos ]
 }
 
+//var till_left_word_bound = function( text, pos ) {
+//  var xs = find_word( text, pos )
+//  var len = pos - xs[0]
+//  return [ xs[0], len ]
+//}
+
 var till_next_word = function(text, pos) {
   var g = find_word_with_spaces_after(text,pos)
   return [ pos, g[0] + g[1] - pos]
@@ -573,11 +613,22 @@ var till_next_word_plus = function(text, pos) {
   return [ pos, g[0] + g[1] - pos ]
 }
 
+
+///* decorator - find a pattern with fn_find and latter find the trailing spaces */
+//var with_trailing_spaces = function( fn_find ) { // todo: refactor, remove?
+//  return function( text, pos ) {
+//    var xs = fn_find(text, pos)
+//    var t = regex_end_pos( /\s*/, text, {from: xs[1]} )
+//    xs[1] = t
+//    return xs
+//  }
+//}
+
 var regex_end_pos = function( regex, text, opts ) {
   opts = (opts === undefined) ? {from:0} : opts
   var tx = text.substr( opts.from )
   var m = regex.exec(tx)
-  var g = 0
+  var g = 0 // group === undefined ? 0 : group
   return m === null ? null : m.index + m[g].length + opts.from
 }
 
@@ -590,6 +641,7 @@ var cut_slice = function( text, i0, i1 ) {
     from: from, to: to }
 }
 
+/* return [start of the line, length] */
 var select_line = function( text, pos ) {
   var ileft = trailing_nl( text, pos )
   var iright = leading_nl( text, pos )
@@ -663,12 +715,14 @@ var select_quotes = function(quote, text, pos) {
 var __select_quotes = function(quote, text, pos) {
   var i_left, i_right
   for(var i = pos; i >= 0; i--) {
+    //if (text.charAt(i) === quote) {
     if (text.substr(i, quote.length) === quote) {
       i_left = i
       break
     }
   }
   for(var i = pos + 1; i < text.length; i++) {
+    //if (text.charAt(i) === quote) {
     if (text.substr(i, quote.length) === quote) {
       i_right = i
       break
@@ -698,6 +752,7 @@ var __find_regex = function(regex, text, pos ) {
   return [ileft, iright - ileft]
 }
 
+/* todo: merge __find_regex and __find_regex_break */
 var __find_regex_break = function( regex, text, pos ) {
   var m, ileft = 0, iright
   while ( (m=regex.exec(text)) !== null ) {
@@ -745,6 +800,8 @@ var leading_char = function(text, pos, character) {
   return t
 }
 
+/* Decorator, skips spaces at position and starts searching from after the
+ * spaces */
 var skip_spaces = function(search_func) {
   return function(text, pos) {
     var k = count_space_from( text, pos )
@@ -806,6 +863,8 @@ var to_array = function( args ) {
   return Array.prototype.slice.call(args, 0)
 }
 
+/* ACTIONS -- various commands */
+
 var act_insert_line_after = function(vim, cdata) {
   var text = vim.get_text()
   var pos = vim.get_pos()
@@ -836,6 +895,8 @@ var act_accept_digit = function(vim, cdata) {
   vim.m_digit_buffer += cdata.digit
 }
 
+/* zero is handled separately, because it can be both "go to start of the
+ * line" and "insert 0 to digit buffer" */
 var act_zero = function(vim, cdata) {
   if (vim.m_digit_buffer === '') {
     var s = vim.select_current_line()
@@ -860,12 +921,13 @@ var act_yank_range = function(vim, cdata) {
 }
 
 var __yank = function(vim, cdata) {
-  var xs = selection_with.apply( vim, [ cdata, vim.get_text(), vim.get_pos() ] )
+  var xs = selection_with.apply( vim, [ cdata, vim.get_text(), vim.get_pos() ] ) // todo, clean 
   var t = cut_slice( vim.get_text(), xs[0], xs[0] + xs[1] )
   vim.insert_to_clipboard( t.cut )
   return t
 }
 
+/* use either select_func or move_func parameter */
 var selection_with = function( cdata, text, pos ) {
   var fn, xs
   fn = cdata.select_func
@@ -896,7 +958,7 @@ var act_append = function(vim, cdata) {
   vim.log('append')
   var xs = vim.select_current_line()
   var p = vim.get_pos()
-  vim.set_pos( p + (p == (xs[0] + xs[1]) ? 0 : 1) )
+  vim.set_pos( p + (p == (xs[0] + xs[1]) ? 0 : 1) ) /* don't move at the end of line*/
   vim.set_mode(INSERT)
 }
 
@@ -909,6 +971,13 @@ var act_append_to_end = function(vim, cdata) {
 
 var act_insert = function(vim, cdata) {
   vim.log('insert')
+  vim.set_mode(INSERT)
+}
+
+var act_insert_to_start = function(vim, cdata) {
+  vim.log('insert beginning')
+  var xs = vim.select_current_line()
+  vim.set_pos(xs[0]) 
   vim.set_mode(INSERT)
 }
 
@@ -998,6 +1067,14 @@ var cut_with = function(text, range) {
     mid: text.substr(pos,len),
     right: text.substr(pos+len) }
 }
+
+//ext//var act_unfocus = function(vim, cdata) {
+//ext//  vim.log('--unfocus--')
+//ext//  window.__refocus = false
+//ext//  vim.m_selector.blur()
+//ext//}
+//ext//
+/* MOVE -- move functions, are launched in VIM context */
 
 var move_right = function(text, pos) {
   return (pos < text.length) ? (pos+1) : (pos)
@@ -1090,3 +1167,47 @@ var move_to_line_end = function(text, pos) {
   var s = select_line( text, pos ) 
   return s[0] + s[1]
 }
+
+/* === READY === */
+
+/* crossrider hook */
+
+//ext// /* hook vim on click into textarea */
+//ext// $(document).on('focus', 'textarea', function(event){
+//ext//    console.log( 'vim: FOCUS' )
+//ext//    $(this).off('keyup keydown keypress')
+//ext//    //$(this).on('keyup keydown keypress', function(e){ 
+//ext//    //  e.stopPropagation() 
+//ext//    //  e.preventDefault()
+//ext//    //  return false
+//ext//    //})
+//ext//
+//ext//    if ( undefined === this.__vim_is_attached ) {
+//ext//      var v = new VIM()
+//ext//      v.on_log = function(m){console.log(m)}
+//ext//      v.attach_to( this )
+//ext//      this.__vim_is_attached = true
+//ext//    } else {
+//ext//      console.log('vim: already attached')
+//ext//    }
+//ext// })
+//ext//
+//ext// $(document).on('blur', 'textarea', function(event){
+//ext//    //$(this).off('vim: keyup keydown keypress')
+//ext//    if (true === window.__refocus) {
+//ext//      console.log('blur: refocus')
+//ext//      $(this).focus()
+//ext//    } else {
+//ext//      console.log('blur: don\'t refocus')
+//ext//    }
+//ext//
+//ext//    return false
+//ext// })
+//ext//
+//ext// $(document).on('click',function(event){
+//ext//   console.log('vim: loose focus on click')
+//ext//   window.__refocus = false
+//ext//   $(this).focus()
+//ext// })
+//ext//
+//ext//});
