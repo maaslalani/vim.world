@@ -83,6 +83,7 @@ const COLORS = {
 
 const vim = new VIM();
 const footer = document.querySelector('footer div')
+const userCount = document.querySelector('header span')
 
 vim.attach_to(textElement);
 textElement.focus();
@@ -90,4 +91,8 @@ textElement.focus();
 textElement.addEventListener('keyup', (event) => {
   footer.innerText = vim.m_mode;
   footer.style.backgroundColor = COLORS[vim.m_mode];
-})
+});
+
+socket.on('users', (users) => {
+  userCount.innerHTML = users;
+});

@@ -33,6 +33,14 @@ header {
   padding: 0 1em;
 }
 
+header span {
+  color: #9AE19D;
+}
+
+header span:after {
+  content: ' \2022';
+}
+
 textarea {
   font-family: 'Roboto Mono', monospace;
   font-size: 1em;

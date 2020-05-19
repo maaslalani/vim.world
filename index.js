@@ -30,19 +30,29 @@ function broadcast(room) {
 
 io.on('connection', (socket) => {
   let peer = new ot.Peer();
+  let socketRoom = '';
 
   socket.on('room', (room) => {
     socket.join(room);
-
+    socketRoom = room;
     if (!state[room]) {
       state[room] = {
         docState: new ot.DocState(),
         revision: 0,
+        users: 0,
       }
     }
 
+    state[room].users += 1;
+    io.in(room).emit('users', state[room].users)
+
     socket.emit('update', state[room].docState.ops);
   })
+
+  socket.on('disconnect', () => {
+    state[socketRoom].users -= 1;
+    io.in(socketRoom).emit('users', state[socketRoom].users)
+  });
 
   socket.on('update', ({ops, room}) => {
     for (let i = 0; i < ops.length; i++) {
