@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vim-world
+  namespace: vim-world
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vim-world
+  template:
+    metadata:
+      labels:
+        app: vim-world
+    spec:
+      containers:
+      - name: vim-world
+        image: gcr.io/maaslalani/vim.world@sha256:6e361d26db3904c466d1ee9f6f424cd1a6f2f6690b82ca79c63f74b1d3e6859f
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vim-world-entrypoint
+  namespace: vim-world
+spec:
+  type: NodePort
+  selector:
+    app: vim-world
+  ports:
+  - port: 8080
+    targetPort: 3000
+    nodePort: 30001
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: vim-world-ingress
+  namespace: vim-world
+spec:
+  backend:
+    serviceName: vim-world-entrypoint
+    servicePort: 8080
